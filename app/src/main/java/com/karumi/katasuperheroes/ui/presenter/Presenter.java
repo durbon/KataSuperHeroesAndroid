@@ -17,7 +17,7 @@
 package com.karumi.katasuperheroes.ui.presenter;
 
 public class Presenter<T extends Presenter.View> {
-
+  //TODO use generic
   private T view;
 
   public void setView(T view) {
