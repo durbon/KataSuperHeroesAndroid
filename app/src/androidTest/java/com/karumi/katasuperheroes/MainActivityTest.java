@@ -26,11 +26,13 @@ import android.view.View;
 
 import com.karumi.katasuperheroes.di.MainComponent;
 import com.karumi.katasuperheroes.di.MainModule;
-import com.karumi.katasuperheroes.matchers.RecyclerViewItemsCountMatcher;
+import com.karumi.katasuperheroes.matchers.ToolbarMatcher;
 import com.karumi.katasuperheroes.model.SuperHero;
 import com.karumi.katasuperheroes.model.SuperHeroesRepository;
 import com.karumi.katasuperheroes.recyclerview.RecyclerViewInteraction;
 import com.karumi.katasuperheroes.ui.view.MainActivity;
+import com.karumi.katasuperheroes.ui.view.SuperHeroDetailActivity;
+
 import it.cosenonjaviste.daggermock.DaggerMockRule;
 
 import java.util.ArrayList;
@@ -44,7 +46,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 
 import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.intent.Intents.intended;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.hasComponent;
+import static android.support.test.espresso.intent.matcher.IntentMatchers.hasExtra;
 import static android.support.test.espresso.matcher.ViewMatchers.hasDescendant;
 import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
@@ -125,7 +131,24 @@ import static org.mockito.Mockito.when;
                 });
     }
 
-    
+    @Test public void opensSuperDetailActivityTapped(){
+
+        List<SuperHero> superHeros = givenBulkSuperHeroes(10);
+        int superHeroIndex = 0;
+
+        startActivity();
+
+        onView(withId(R.id.recycler_view))
+                .perform(RecyclerViewActions.actionOnItemAtPosition(superHeroIndex, click()));
+
+        SuperHero selectedSuperHero = superHeros.get(superHeroIndex);
+        intended(hasComponent(SuperHeroDetailActivity.class.getCanonicalName()));
+        intended(hasExtra("super_hero_name_key", selectedSuperHero.getName()));
+        ToolbarMatcher.onToolbarWithTitle(selectedSuperHero.getName());
+
+    }
+
+
   private void givenThereAreNoSuperHeroes() {
     when(repository.getAll()).thenReturn(Collections.<SuperHero>emptyList());
   }
@@ -151,12 +174,15 @@ import static org.mockito.Mockito.when;
     private List<SuperHero> givenBulkSuperHeroes(int count){
         List<SuperHero> superHeroList = new LinkedList<>();
         for (int i = 0; i <= count; i++) {
-            superHeroList.add(new SuperHero("name " + i, "https://i.annihil.us/u/prod/marvel/i/mg/9/b0/537bc2375dfb9.jpg", false,
+            SuperHero superHero = new SuperHero("name " + i, "https://i.annihil.us/u/prod/marvel/i/mg/9/b0/537bc2375dfb9.jpg", false,
                     "Scarlet Witch was born at the Wundagore base of the High Evolutionary, she and her twin "
                             + "brother Pietro were the children of Romani couple Django and Marya Maximoff. The "
                             + "High Evolutionary supposedly abducted the twins when they were babies and "
                             + "experimented on them, once he was disgusted with the results, he returned them to"
-                            + " Wundagore, disguised as regular mutants."));
+                            + " Wundagore, disguised as regular mutants.");
+            superHeroList.add(superHero);
+
+            when(repository.getByName("name " + i)).thenReturn(superHero);
         }
         when(repository.getAll()).thenReturn(superHeroList);
         return superHeroList;
